@@ -2,8 +2,8 @@ import pygame
 import random
 import cv2
 import time
-import threading
 from recorder import Recorder
+from util import get_window_position
 
 pygame.init()
 
@@ -35,15 +35,7 @@ for _ in range(NUM_SQUARES):
     color = random.choice(colors)
     squares.append([x, y, dx, dy, color])
 
-# wait for window to appear
-FOURCC = "mp4v"
-OUTPUT_FILE = "output.mp4"
-recorder = Recorder(window_name=WINDOW_NAME, fourcc=FOURCC, fps=FPS, output_file=OUTPUT_FILE)
-time.sleep(0.5)
-while not recorder.setup_video_writer():
-    time.sleep(0.1)
-
-def game_loop(screen, squares, fps, stop_event):
+def game_loop(screen, squares, fps):
     clock = pygame.time.Clock()
     start_time = time.time()
 
@@ -69,52 +61,31 @@ def game_loop(screen, squares, fps, stop_event):
         pygame.display.flip()  # update display
 
         if time.time() - start_time >= VIDEO_LENGTH:  # stop after VIDEO_LENGTH seconds
-            stop_event.set()  # signal to stop the recording
             break
 
         clock.tick(fps)
 
 # recording setup
 VIDEO_LENGTH = 3 # in seconds
-
-# flag to stop recording
-stop_recording = threading.Event()
-
-def record_video(recorder, duration, fps, stop_event):
-    start_time = time.time()
-    last_capture_time = start_time
-    
-    while True:
-        if stop_event.is_set():  # check if we should stop the recording
-            break
-
-        current_time = time.time()
-
-        # capture frame at intervals based on the target FPS
-        if current_time - last_capture_time >= 1 / fps:
-            recorder.capture_frame()
-            last_capture_time = current_time
-        
-        # stop recording after the specified duration
-        if current_time - start_time >= duration:
-            break
-        
-        # sleep for a small time to prevent busy-waiting
-        time.sleep(0.001)
-
-    recorder.release()
-    print(f"🎥 Recording saved as {OUTPUT_FILE} ✅")
+FOURCC = "mp4v"
+OUTPUT_FILE = "output.mp4"
+recorder = Recorder(fourcc=FOURCC, fps=FPS, output_file=OUTPUT_FILE)
 
 if __name__ == "__main__":
-    # record in a background thread
-    recording_thread = threading.Thread(target=record_video, args=(recorder, VIDEO_LENGTH, FPS, stop_recording))
-    recording_thread.start()
+    time.sleep(0.5)
+    
+    # get window-to-be-recorded data
+    x, y, width, height = get_window_position(WINDOW_NAME)
+    print(x, y, width, height)
+    
+    # start recording window
+    recorder.start_recording(x, y, width, height)
 
     # run the game loop in the main thread
-    game_loop(screen, squares, FPS, stop_recording)
+    game_loop(screen, squares, FPS)
 
-    # wait for recording to finish
-    recording_thread.join()
+    # end recording
+    recorder.stop_recording()
 
 # cleanup
 pygame.quit()
