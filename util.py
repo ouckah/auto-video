@@ -15,4 +15,5 @@ def get_window_position(window_name):
       width = int(bounds.get("Width", 800))
       height = int(bounds.get("Height", 600))
       return x, y, width, height
+  print(f"Window with name {window_name} could not be found.")
   return None
