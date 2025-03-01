@@ -173,5 +173,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# MacOS hidden files
+.DS_Store
+
 # Output from recorder
 output.mov
