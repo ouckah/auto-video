@@ -1,5 +1,5 @@
 import cv2
-import pyautogui as gui
+from mss import mss
 import numpy as np
 from Quartz import CGWindowListCopyWindowInfo, kCGWindowListOptionOnScreenOnly
 
@@ -45,7 +45,10 @@ class Recorder:
       print("Error: Invalid window dimensions.")
       return False
     
-    self.out = cv2.VideoWriter(self.output_file, self.fourcc, self.fps, (self.width, self.height))
+    # HOTFIX: width and height must be * 2, unsure why, might be bug with cv2.VideoWriter
+    # @see https://stackoverflow.com/questions/74107626/python-opencv2-record-screen
+    DOUBLED_SCREEN_SIZE = (self.width * 2, self.height * 2)
+    self.out = cv2.VideoWriter(self.output_file, self.fourcc, self.fps, DOUBLED_SCREEN_SIZE) 
     
     if not self.out.isOpened():
       print("Error: Failed to open video writer.")
@@ -57,10 +60,12 @@ class Recorder:
     """
     Captures a screenshot of the specified window area and writes it to the video.
     """
-    img = gui.screenshot(region=(self.x, self.y, self.width, self.height))
-    frame = np.array(img)
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    self.out.write(frame)
+    with mss() as sct:
+      monitor = {"top": self.y, "left": self.x, "width": self.width, "height": self.height}
+      img = sct.grab(monitor)
+      frame = np.array(img)
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+      self.out.write(frame)
 
   def release(self):
     """

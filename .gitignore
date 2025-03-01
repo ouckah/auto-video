@@ -178,3 +178,4 @@ cython_debug/
 
 # Output from recorder
 output.mov
+output.mp4
