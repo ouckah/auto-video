@@ -1,8 +1,8 @@
 import pygame
-import random
 import cv2
 import time
 from recorder import Recorder
+from games.squares_fight import SquareFight
 from util import get_window_position
 
 pygame.init()
@@ -12,9 +12,6 @@ WINDOW_NAME = "Python"
 FPS = 60
 SCREEN_WIDTH = 576
 SCREEN_HEIGHT = 1016
-SQUARE_SIZE = 40
-NUM_SQUARES = 10
-colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 165, 0)]
 
 # set up Pygame window
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.NOFRAME)
@@ -25,51 +22,35 @@ for _ in range(5):  # process a few events to ensure window is initialized
     pygame.event.get()
     pygame.display.flip()
 
-# square properties
-squares = []
-for _ in range(NUM_SQUARES):
-    x = random.randint(0, SCREEN_WIDTH - SQUARE_SIZE)
-    y = random.randint(0, SCREEN_HEIGHT - SQUARE_SIZE)
-    dx = random.choice([-3, 3])
-    dy = random.choice([-3, 3])
-    color = random.choice(colors)
-    squares.append([x, y, dx, dy, color])
-
-def game_loop(screen, squares, fps):
+def game_loop(game, fps):
     clock = pygame.time.Clock()
     start_time = time.time()
+    game.start()
 
     while True:
-        screen.fill((0, 0, 0))  # clear screen
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return  # exit the game loop
-
-        for square in squares:
-            square[0] += square[2]  # move x
-            square[1] += square[3]  # move y
-
-            # bounce off walls
-            if square[0] <= 0 or square[0] + SQUARE_SIZE >= SCREEN_WIDTH:
-                square[2] *= -1
-            if square[1] <= 0 or square[1] + SQUARE_SIZE >= SCREEN_HEIGHT:
-                square[3] *= -1
-
-            pygame.draw.rect(screen, square[4], (square[0], square[1], SQUARE_SIZE, SQUARE_SIZE))
-
+        game.update()  # update game state
         pygame.display.flip()  # update display
-
-        if time.time() - start_time >= VIDEO_LENGTH:  # stop after VIDEO_LENGTH seconds
+        if RECORD_MODE == "timed" and time.time() - start_time >= VIDEO_LENGTH:  # stop after VIDEO_LENGTH seconds
             break
+        if RECORD_MODE == "signal" and game.playing() == False:
+            end_signal_time = time.time()
 
+            # continue for 3 more seconds
+            while time.time() - end_signal_time < 3:
+                game.update()
+                pygame.display.flip()
+                clock.tick(fps)
+                
+            break
         clock.tick(fps)
 
 # recording setup
-VIDEO_LENGTH = 3 # in seconds
+RECORD_MODE = "signal" # "signal" or "timed"
+VIDEO_LENGTH = 5 # in seconds (for "timed" mode)
 FOURCC = "mp4v"
 OUTPUT_FILE = "output.mp4"
 recorder = Recorder(fourcc=FOURCC, fps=FPS, output_file=OUTPUT_FILE)
+game = SquareFight(screen, fps=FPS, screen_width=SCREEN_WIDTH, screen_height=SCREEN_HEIGHT)
 
 if __name__ == "__main__":
     time.sleep(0.5)
@@ -82,7 +63,7 @@ if __name__ == "__main__":
     recorder.start_recording(x, y, width, height)
 
     # run the game loop in the main thread
-    game_loop(screen, squares, FPS)
+    game_loop(game, FPS)
 
     # end recording
     recorder.stop_recording()
