@@ -38,6 +38,7 @@ class SquareFight:
 
     # game specific fields
     self.NUM_SQUARES = 20
+    self.SQUARES_TO_END = 1
     self.SQUARE_SIZE = 50
     self.SQUARE_HEALTH = 5
     self.COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 165, 0)]
@@ -155,7 +156,7 @@ class SquareFight:
           if sq2.is_dead():
             self.NUM_SQUARES -= 1
             SoundEffect.bling_sound.play()
-          if self.NUM_SQUARES <= 4:
+          if self.NUM_SQUARES <= self.SQUARES_TO_END:
             self.play = False
             self.end = True
             break
