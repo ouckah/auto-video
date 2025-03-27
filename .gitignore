@@ -179,6 +179,8 @@ cython_debug/
 # Output from recorder
 output.mov
 output.mp4
+output.wav
+final_output.mp4
 
 # Script for generating TikTok tokens
 generate_token.py

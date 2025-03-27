@@ -1,5 +1,6 @@
 import pygame
 import random
+from sounds import SoundEffect
 
 class Square:
   def __init__(self, x, y, dx, dy, color, size, index, health):
@@ -123,11 +124,28 @@ class SquareFight:
             sq2.damage()
             sq2.grow()
 
+            # adjust position to prevent overlap
+            if sq1.x < sq2.x:
+              sq1.x -= overlap_x // 2
+              sq2.x += overlap_x // 2
+            else:
+              sq1.x += overlap_x // 2
+              sq2.x -= overlap_x // 2
+
+          # play collision sound
+          SoundEffect.tap_sound.play()
+
           # if a square is dead, keep track
           if sq1.is_dead():
             self.NUM_SQUARES -= 1
+            SoundEffect.bling_sound.play()
           if sq2.is_dead():
             self.NUM_SQUARES -= 1
+            SoundEffect.bling_sound.play()
+          if self.NUM_SQUARES <= 4:
+            self.play = False
+            self.end = True
+            break
 
 
   def update(self):
