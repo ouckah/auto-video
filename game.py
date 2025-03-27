@@ -44,31 +44,44 @@ def game_loop(game, fps):
             break
         clock.tick(fps)
 
+    return time.time() - start_time  # return elapsed time
+
 # recording setup
 RECORD_MODE = "signal" # "signal" or "timed"
 VIDEO_LENGTH = 5 # in seconds (for "timed" mode)
+MAX_RECORDING_TIME = 90  # seconds (time before restarting the process)
 FOURCC = "mp4v"
 OUTPUT_FILE = "output.mp4"
 recorder = Recorder(fourcc=FOURCC, fps=FPS)
-game = SquareFight(screen, fps=FPS, screen_width=SCREEN_WIDTH, screen_height=SCREEN_HEIGHT)
 
-if __name__ == "__main__":
+while True:
     time.sleep(0.5)
-    
+
     # get window-to-be-recorded data
     x, y, width, height = get_window_position(WINDOW_NAME)
     print(x, y, width, height)
-    
+
     # start recording window
     recorder.start_recording(x, y, width, height)
 
-    # run the game loop in the main thread
-    game_loop(game, FPS)
+    # create a new game instance
+    game = SquareFight(screen, fps=FPS, screen_width=SCREEN_WIDTH, screen_height=SCREEN_HEIGHT)
+
+    # run the game loop and measure time
+    start_time = time.time()
+    elapsed_time = game_loop(game, FPS)
 
     # end recording
     recorder.stop_recording()
 
+    if elapsed_time > MAX_RECORDING_TIME:
+        print("Recording exceeded 90 seconds. Restarting...")
+        continue  # restart the process
+
+    # merge video and audio if within time limit
+    recorder.merge_audio_video()
+    break  # exit loop and finalize recording
+
 # cleanup
-recorder.merge_audio_video()
 pygame.quit()
 cv2.destroyAllWindows()
