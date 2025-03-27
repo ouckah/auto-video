@@ -30,6 +30,8 @@ def game_loop(game, fps):
     while True:
         game.update()  # update game state
         pygame.display.flip()  # update display
+        if time.time() - start_time > MAX_RECORDING_TIME:  # stop after MAX_RECORDING_TIME seconds
+            break
         if RECORD_MODE == "timed" and time.time() - start_time >= VIDEO_LENGTH:  # stop after VIDEO_LENGTH seconds
             break
         if RECORD_MODE == "signal" and game.stopped() == True:
