@@ -43,6 +43,7 @@ class SquareFight:
     self.COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 165, 0)]
 
     self.play = True
+    self.end = False
 
     self.screen = screen
     self.fps = fps
@@ -73,6 +74,10 @@ class SquareFight:
   
   def playing(self):
     return self.play
+  
+
+  def stopped(self):
+    return self.end
 
   
   def draw_square(self, square):
@@ -117,6 +122,14 @@ class SquareFight:
             sq1.dy, sq2.dy = sq2.dy, sq1.dy  # swap y velocities
             sq1.damage()
             sq1.grow()
+
+            # adjust position to prevent overlap
+            if sq1.y < sq2.y:
+              sq1.y -= overlap_y // 2
+              sq2.y += overlap_y // 2
+            else:
+              sq1.y += overlap_y // 2
+              sq2.y -= overlap_y // 2
 
           # horizontal collision
           else:
@@ -167,9 +180,20 @@ class SquareFight:
         square.move()
 
         # bounce off bounded box walls
-        if square.x <= self.box_x + BUFFER or square.x + square.size >= self.box_x + self.box_size - BUFFER:
+        if square.x <= self.box_x + BUFFER:
+          square.x = self.box_x + BUFFER
           square.dx *= -1
-        if square.y <= self.box_y + BUFFER or square.y + square.size >= self.box_y + self.box_size - BUFFER:
+
+        if square.x + square.size >= self.box_x + self.box_size - BUFFER:
+          square.x = self.box_x + self.box_size - square.size - BUFFER
+          square.dx *= -1
+
+        if square.y <= self.box_y + BUFFER:
+          square.y = self.box_y + BUFFER
+          square.dy *= -1
+
+        if square.y + square.size >= self.box_y + self.box_size - BUFFER:
+          square.y = self.box_y + self.box_size - square.size - BUFFER
           square.dy *= -1
 
       # detect collisions between squares
@@ -183,7 +207,7 @@ class SquareFight:
 
     else:
       for square in self.squares:
-        if self.square_health[self.squares.index(square)] > 0:
+        if square.health > 0:
           # increase the size of the square over time
           self.square_size_increase_rate = 1
           square.size += self.square_size_increase_rate

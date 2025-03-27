@@ -32,7 +32,7 @@ def game_loop(game, fps):
         pygame.display.flip()  # update display
         if RECORD_MODE == "timed" and time.time() - start_time >= VIDEO_LENGTH:  # stop after VIDEO_LENGTH seconds
             break
-        if RECORD_MODE == "signal" and game.playing() == False:
+        if RECORD_MODE == "signal" and game.stopped() == True:
             end_signal_time = time.time()
 
             # continue for 3 more seconds
@@ -40,7 +40,7 @@ def game_loop(game, fps):
                 game.update()
                 pygame.display.flip()
                 clock.tick(fps)
-                
+
             break
         clock.tick(fps)
 
@@ -49,7 +49,7 @@ RECORD_MODE = "signal" # "signal" or "timed"
 VIDEO_LENGTH = 5 # in seconds (for "timed" mode)
 FOURCC = "mp4v"
 OUTPUT_FILE = "output.mp4"
-recorder = Recorder(fourcc=FOURCC, fps=FPS, output_file=OUTPUT_FILE)
+recorder = Recorder(fourcc=FOURCC, fps=FPS)
 game = SquareFight(screen, fps=FPS, screen_width=SCREEN_WIDTH, screen_height=SCREEN_HEIGHT)
 
 if __name__ == "__main__":
@@ -69,5 +69,6 @@ if __name__ == "__main__":
     recorder.stop_recording()
 
 # cleanup
+recorder.merge_audio_video()
 pygame.quit()
 cv2.destroyAllWindows()
